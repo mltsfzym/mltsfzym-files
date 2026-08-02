@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zymfreemusic_0.2.3.260802</title>
+    <link rel="stylesheet" href="https://unpkg.com/98.css">
+    <style>
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0; padding: 0;
+            height: 100vh; overflow: hidden;
+            background: #008080;
+            font-family: "Microsoft Sans Serif", sans-serif;
+        }
+        .container {
+            display: flex;
+            height: 100vh; width: 100vw;
+            gap: 8px; padding: 8px;
+        }
+        .left-window {
+            flex: 1; min-width: 0;
+            display: flex; flex-direction: column;
+        }
+        .right-column {
+            flex: 1; min-width: 0;
+            display: flex; flex-direction: column;
+            gap: 8px;
+        }
+        .right-top-window, .right-bottom-window {
+            flex: 1; min-height: 0;
+            display: flex; flex-direction: column;
+        }
+        .window { display: flex; flex-direction: column; }
+        .window-body {
+            flex: 1; min-height: 0; overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+        .search-box {
+            display: flex; gap: 8px;
+            padding: 8px 12px; flex-shrink: 0;
+            align-items: center;
+        }
+        .search-box input { flex: 1; font-size: 14px; padding: 4px 8px; }
+        .search-box button { min-width: 80px; }
+        .source-selector {
+            display: flex; gap: 16px;
+            padding: 4px 12px 8px; flex-shrink: 0;
+            align-items: center;
+        }
+        .results-area {
+            flex: 1; min-height: 0;
+            padding: 8px 12px;
+            display: flex; flex-direction: column;
+        }
+        .sunken-panel {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+        }
+        table.interactive {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table.interactive th {
+            text-align: left;
+            padding: 4px 8px;
+            white-space: nowrap;
+        }
+        table.interactive td {
+            padding: 4px 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        table.interactive td.col-cover {
+            width: 40px;
+            padding: 2px 4px;
+        }
+        table.interactive td.col-cover img {
+            width: 32px; height: 32px;
+            display: block;
+        }
+        table.interactive td.col-name,
+        table.interactive td.col-artist,
+        table.interactive td.col-album {
+            max-width: 0;
+            width: 25%;
+        }
+        table.interactive td.col-duration {
+            width: 50px;
+            text-align: right;
+        }
+        table.interactive td.col-actions {
+            width: 60px;
+            text-align: right;
+        }
+        table.interactive td.col-actions button {
+            font-size: 11px;
+            padding: 1px 6px;
+            min-width: auto;
+        }
+        .loading, .empty, .error {
+            text-align: center; padding: 40px;
+        }
+        .loading { color: #555; }
+        .empty { color: #888; }
+        .error { color: #c00000; }
+        /* 播放器样式 */
+        .player-area {
+            flex: 1; min-height: 0; overflow-y: auto;
+            padding: 12px;
+            display: flex; flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .player-cover {
+            width: 120px; height: 120px;
+            border: 2px solid #808080;
+            object-fit: cover;
+            background: #c0c0c0;
+        }
+        .player-info {
+            text-align: center;
+            width: 100%;
+        }
+        .player-info .song-name {
+            font-weight: bold; font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .player-info .song-artist {
+            font-size: 12px; color: #555;
+        }
+        .player-controls {
+            display: flex; gap: 8px;
+            align-items: center;
+            margin-top: 4px;
+        }
+        .player-controls button {
+            min-width: 60px;
+            font-size: 12px;
+            padding: 2px 8px;
+        }
+        .progress-row {
+            display: flex; align-items: center;
+            gap: 6px; width: 100%;
+            margin-top: 4px;
+        }
+        .progress-row .time {
+            font-size: 11px; color: #555;
+            min-width: 36px; text-align: center;
+        }
+        .progress-row .progress-indicator {
+            flex: 1;
+            height: 16px;
+            cursor: pointer;
+        }
+        .slider-row {
+            display: flex; align-items: center;
+            gap: 6px; width: 100%;
+            margin-top: 2px;
+        }
+        .slider-row label {
+            font-size: 11px; color: #555;
+            min-width: 36px;
+        }
+        .slider-row input[type="range"] {
+            flex: 1;
+        }
+        .player-buttons {
+            display: flex; gap: 8px;
+            margin-top: 4px;
+        }
+        .player-buttons button {
+            font-size: 11px;
+            padding: 2px 10px;
+            min-width: auto;
+        }
+        .playlist-tabs {
+            flex-shrink: 0;
+            padding: 4px 12px 0;
+        }
+        .playlist-tabs menu[role="tablist"] {
+            margin: 0;
+            padding: 0;
+        }
+        .playlist-tabs menu[role="tablist"] li {
+            padding: 2px 12px;
+        }
+        .playlist-area {
+            flex: 1; min-height: 0; overflow-y: auto;
+            padding: 8px 12px;
+        }
+        .playlist-area .tree-view {
+            margin: 0;
+        }
+        .playlist-area .tree-view li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 2px 0;
+        }
+        .playlist-area .tree-view li .pl-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+        .playlist-area .tree-view li .pl-name:hover {
+            text-decoration: underline;
+            color: #000080;
+        }
+        .playlist-area .tree-view li .pl-artist {
+            color: #666;
+            font-size: 11px;
+            min-width: 80px;
+            text-align: right;
+        }
+        .playlist-area .tree-view li button {
+            font-size: 10px;
+            padding: 1px 6px;
+            min-width: auto;
+        }
+        .tab-panel {
+            display: none;
+        }
+        .tab-panel.active {
+            display: block;
+        }
+        /* 精确匹配结果高亮 */
+        .exact-match-row {
+            background-color: #e0ffe0 !important;
+        }
+        .exact-match-badge {
+            background: #008000;
+            color: #fff;
+            font-size: 10px;
+            padding: 1px 4px;
+            margin-left: 4px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧：搜索 -->
+        <div class="left-window window">
+            <div class="title-bar">
+                <div class="title-bar-text">音乐搜索</div>
+                <div class="title-bar-controls">
+                    <button aria-label="Minimize"></button>
+                    <button aria-label="Maximize"></button>
+                    <button aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="window-body">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="输入歌曲名称或粘贴音乐链接..." onkeydown="if(event.key==='Enter') doSearch()">
+                    <button onclick="doSearch()">搜索</button>
+                </div>
+                <div class="source-selector">
+                    <div class="field-row">
+                        <input checked type="radio" id="src-netease" name="source" value="netease">
+                        <label for="src-netease">网易云音乐</label>
+                    </div>
+                    <div class="field-row">
+                        <input type="radio" id="src-qq" name="source" value="qq">
+                        <label for="src-qq">QQ音乐</label>
+                    </div>
+                    <div class="field-row">
+                        <input type="checkbox" id="exactMatch" name="exactMatch">
+                        <label for="exactMatch">精确搜索</label>
+                    </div>
+                </div>
+                <div class="results-area" id="resultsArea">
+                    <div class="empty">请输入歌曲名称或粘贴音乐链接进行搜索</div>
+                </div>
+            </div>
+            <div class="status-bar" id="statusBar">
+                <p class="status-bar-field" id="statusText">就绪</p>
+                <p class="status-bar-field" id="resultCount"></p>
+            </div>
+        </div>
+
+        <!-- 右侧列：上下两个窗口 -->
+        <div class="right-column">
+            <!-- 右上：播放器 -->
+            <div class="right-top-window window">
+                <div class="title-bar">
+                    <div class="title-bar-text">播放器</div>
+                    <div class="title-bar-controls">
+                        <button aria-label="Minimize"></button>
+                        <button aria-label="Maximize"></button>
+                        <button aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="player-area" id="playerArea">
+                    <img class="player-cover" id="playerCover" src="" alt="cover" style="display:none;">
+                    <div class="player-info">
+                        <div class="song-name" id="playerName">没有正在播放的音乐</div>
+                        <div class="song-artist" id="playerArtist">-</div>
+                    </div>
+                    <audio id="audioPlayer" style="display:none;"></audio>
+                    <div class="player-controls">
+                        <button onclick="prevSong()">上一首</button>
+                        <button onclick="togglePlay()" id="playBtn">播放</button>
+                        <button onclick="nextSong()">下一首</button>
+                    </div>
+                    <div class="progress-row">
+                        <span class="time" id="currentTime">0:00</span>
+                        <div class="progress-indicator" id="progressContainer" onclick="seekByClick(event)">
+                            <span class="progress-indicator-bar" id="progressBar" style="width: 0%;"></span>
+                        </div>
+                        <span class="time" id="totalTime">0:00</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>速度</label>
+                        <input type="range" id="speedSlider" min="0.5" max="2" step="0.1" value="1" oninput="setSpeed(this.value)">
+                        <span id="speedValue" style="font-size:11px;min-width:30px;">1.0x</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>音量</label>
+                        <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" oninput="setVolume(this.value)">
+                        <span id="volumeValue" style="font-size:11px;min-width:30px;">100%</span>
+                    </div>
+                    <div class="player-buttons">
+                        <button onclick="copyMp3Link()">复制链接</button>
+                        <button onclick="downloadMp3()">下载</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右下：播放列表 -->
+            <div class="right-bottom-window window">
+                <div class="title-bar">
+                    <div class="title-bar-text">播放列表</div>
+                    <div class="title-bar-controls">
+                        <button aria-label="Minimize"></button>
+                        <button aria-label="Maximize"></button>
+                        <button aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="playlist-tabs">
+                    <menu role="tablist">
+                        <li role="tab" aria-selected="true" onclick="switchPlaylistTab('netease')"><a href="#tabs">网易云音乐</a></li>
+                        <li role="tab" onclick="switchPlaylistTab('qq')"><a href="#tabs">QQ音乐</a></li>
+                    </menu>
+                </div>
+                <div class="playlist-area" id="playlistArea">
+                    <div id="tab-netease" class="tab-panel active">
+                        <div class="empty" id="playlistEmptyNetease">这里空空如也...</div>
+                        <ul class="tree-view" id="playlistTreeNetease" style="display:none;"></ul>
+                    </div>
+                    <div id="tab-qq" class="tab-panel">
+                        <div class="empty" id="playlistEmptyQQ">这里空空如也...</div>
+                        <ul class="tree-view" id="playlistTreeQQ" style="display:none;"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const NETEASE_API = 'https://apis.netstart.cn/music';
+        const JKAPI_BASE = 'https://jkapi.com/api/music';
+        const JKAPI_KEY = '9a36c99b7cf7cf30f903a182cfcd7953';
+        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+        const STORAGE_KEY = 'music_playlists';
+        let playlists = { netease: [], qq: [] };
+        let currentSong = null;
+        let currentPlaylist = [];
+        let currentIndex = -1;
+        let searchResults = [];
+
+        const audio = document.getElementById('audioPlayer');
+        const playBtn = document.getElementById('playBtn');
+        const progressBar = document.getElementById('progressBar');
+        const progressContainer = document.getElementById('progressContainer');
+        const currentTimeEl = document.getElementById('currentTime');
+        const totalTimeEl = document.getElementById('totalTime');
+
+        // Load playlists from localStorage on startup
+        function loadPlaylists() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    playlists = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.error('Failed to load playlists:', e);
+            }
+        }
+
+        // Save playlists to localStorage
+        function savePlaylists() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(playlists));
+            } catch (e) {
+                console.error('Failed to save playlists:', e);
+            }
+        }
+
+        // Initialize
+        loadPlaylists();
+
+        audio.addEventListener('timeupdate', function() {
+            if (audio.duration) {
+                const pct = (audio.currentTime / audio.duration) * 100;
+                progressBar.style.width = pct + '%';
+                currentTimeEl.textContent = formatTime(audio.currentTime);
+                totalTimeEl.textContent = formatTime(audio.duration);
+            }
+        });
+
+        audio.addEventListener('ended', function() {
+            playBtn.textContent = '播放';
+            nextSong();
+        });
+
+        function formatTime(seconds) {
+            if (!seconds || isNaN(seconds)) return '0:00';
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return m + ':' + (s < 10 ? '0' + s : s);
+        }
+
+        function formatDuration(ms) {
+            if (!ms) return '--:--';
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return minutes + ':' + (seconds < 10 ? '0' + seconds : seconds);
+        }
+
+        function formatDurationQQ(seconds) {
+            if (!seconds) return '--:--';
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return minutes + ':' + (secs < 10 ? '0' + secs : secs);
+        }
+
+        function getSelectedSource() {
+            return document.querySelector('input[name="source"]:checked').value;
+        }
+
+        function isExactMatchEnabled() {
+            return document.getElementById('exactMatch').checked;
+        }
+
+        function isNeteaseUrl(text) {
+            return /^https?:\/\/music\.163\.com/.test(text.trim());
+        }
+
+        function isQQUrl(text) {
+            return /^https?:\/\/y\.qq\.com/.test(text.trim());
+        }
+
+        function extractNeteaseSongId(url) {
+            const match = url.match(/(?:song\?id=|song\/)(\d+)/);
+            return match ? match[1] : null;
+        }
+
+        function extractQQSongId(url) {
+            const match = url.match(/songDetail\/([a-zA-Z0-9]+)/);
+            return match ? match[1] : null;
+        }
+
+        function normalizeNeteaseSong(song) {
+            const artists = song.ar || song.artists || [];
+            const album = song.al || song.album || {};
+            const duration = song.dt || song.duration || 0;
+            const cover = album.picUrl || (album.picId ? 'https://p1.music.126.net/6y-UleORITEDbvrOLV0Q8A==/' + album.picId + '.jpg' : '');
+            
+            return {
+                id: song.id,
+                mid: null,
+                name: song.name,
+                artists: artists.map(function(a) { return a.name; }).join(' / ') || '未知歌手',
+                album: album.name || '未知专辑',
+                cover: cover,
+                duration: formatDuration(duration),
+                source: 'netease',
+                musicUrl: ''
+            };
+        }
+
+        function normalizeQQSong(song) {
+            const singers = song.singer || [];
+            const album = song.album || {};
+            const cover = album.mid ? 'https://y.gtimg.cn/music/photo_new/T002R300x300M000' + album.mid + '.jpg' : '';
+            
+            return {
+                id: song.id,
+                mid: song.mid,
+                name: song.name || song.title,
+                artists: singers.map(function(s) { return s.name; }).join(' / ') || '未知歌手',
+                album: album.name || '未知专辑',
+                cover: cover,
+                duration: formatDurationQQ(song.interval),
+                source: 'qq',
+                musicUrl: ''
+            };
+        }
+
+        // 精确匹配函数：必须完全一致，包括大小写、空格、标点
+        function isExactMatch(songName, searchQuery) {
+            return songName === searchQuery;
+        }
+
+        async function fetchMp3Url(song) {
+            const searchName = (song.name + '_' + song.artists).replace(/\s+/g, '_');
+            const plat = song.source === 'netease' ? 'wy' : 'qq';
+            const url = JKAPI_BASE + '?plat=' + plat + '&type=json&apiKey=' + JKAPI_KEY + '&name=' + encodeURIComponent(searchName);
+            
+            try {
+                const resp = await fetch(url);
+                const data = await resp.json();
+                if (data.code === 1 && data.music_url) {
+                    return data.music_url.replace(/\\/g, '');
+                }
+            } catch (e) {
+                console.error('Failed to fetch MP3:', e);
+            }
+            return '';
+        }
+
+        async function playSong(song) {
+            currentSong = song;
+            document.getElementById('playerName').textContent = song.name;
+            document.getElementById('playerArtist').textContent = song.artists;
+            const coverEl = document.getElementById('playerCover');
+            if (song.cover) {
+                coverEl.src = song.cover;
+                coverEl.style.display = 'block';
+            } else {
+                coverEl.style.display = 'none';
+            }
+            
+            const mp3Url = await fetchMp3Url(song);
+            song.musicUrl = mp3Url;
+            
+            if (mp3Url) {
+                audio.src = mp3Url;
+                audio.play().then(function() {
+                    playBtn.textContent = '暂停';
+                }).catch(function(e) {
+                    console.error('Play error:', e);
+                    alert('无法播放: ' + e.message);
+                    playBtn.textContent = '播放';
+                });
+            } else {
+                alert('无法获取播放链接');
+                playBtn.textContent = '播放';
+            }
+        }
+
+        function togglePlay() {
+            if (!currentSong) {
+                alert('请先选择一首歌曲');
+                return;
+            }
+            if (audio.paused) {
+                audio.play().then(function() {
+                    playBtn.textContent = '暂停';
+                }).catch(function(e) {
+                    alert('播放失败: ' + e.message);
+                });
+            } else {
+                audio.pause();
+                playBtn.textContent = '播放';
+            }
+        }
+
+        function seekByClick(event) {
+            if (!audio.duration) return;
+            const rect = progressContainer.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const pct = Math.max(0, Math.min(1, x / rect.width));
+            audio.currentTime = pct * audio.duration;
+            progressBar.style.width = (pct * 100) + '%';
+        }
+
+        function setSpeed(value) {
+            audio.playbackRate = parseFloat(value);
+            document.getElementById('speedValue').textContent = parseFloat(value).toFixed(1) + 'x';
+        }
+
+        function setVolume(value) {
+            audio.volume = parseFloat(value);
+            document.getElementById('volumeValue').textContent = Math.round(parseFloat(value) * 100) + '%';
+        }
+
+        function prevSong() {
+            if (currentPlaylist.length === 0) return;
+            currentIndex = (currentIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
+            playSong(currentPlaylist[currentIndex]);
+        }
+
+        function nextSong() {
+            if (currentPlaylist.length === 0) return;
+            currentIndex = (currentIndex + 1) % currentPlaylist.length;
+            playSong(currentPlaylist[currentIndex]);
+        }
+
+        function copyMp3Link() {
+            if (!currentSong || !currentSong.musicUrl) {
+                alert('暂无MP3链接');
+                return;
+            }
+            navigator.clipboard.writeText(currentSong.musicUrl).then(function() {
+                alert('MP3链接已复制到剪贴板');
+            }).catch(function() {
+                const ta = document.createElement('textarea');
+                ta.value = currentSong.musicUrl;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                alert('MP3链接已复制到剪贴板');
+            });
+        }
+
+        function downloadMp3() {
+            if (!currentSong || !currentSong.musicUrl) {
+                alert('暂无MP3链接');
+                return;
+            }
+            const a = document.createElement('a');
+            a.href = currentSong.musicUrl;
+            a.download = currentSong.name + '.mp3';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function addToPlaylistByIndex(idx) {
+            const song = searchResults[idx];
+            if (!song) return;
+            const list = playlists[song.source];
+            const key = song.source === 'netease' ? 'id' : 'mid';
+            if (list.find(function(s) { return s[key] === song[key]; })) {
+                alert('该歌曲已在播放列表中');
+                return;
+            }
+            list.push(song);
+            savePlaylists();
+            renderPlaylist(song.source);
+        }
+
+        function removeFromPlaylist(source, index) {
+            playlists[source].splice(index, 1);
+            savePlaylists();
+            renderPlaylist(source);
+        }
+
+        function playFromPlaylist(source, index) {
+            currentPlaylist = playlists[source];
+            currentIndex = index;
+            playSong(currentPlaylist[currentIndex]);
+        }
+
+        function renderPlaylist(source) {
+            const list = playlists[source];
+            const emptyEl = document.getElementById(source === 'netease' ? 'playlistEmptyNetease' : 'playlistEmptyQQ');
+            const treeEl = document.getElementById(source === 'netease' ? 'playlistTreeNetease' : 'playlistTreeQQ');
+            
+            if (list.length === 0) {
+                emptyEl.style.display = 'block';
+                treeEl.style.display = 'none';
+                return;
+            }
+            
+            emptyEl.style.display = 'none';
+            treeEl.style.display = 'block';
+            
+            let html = '';
+            list.forEach(function(s, idx) {
+                html += '<li><span class="pl-name" onclick="playFromPlaylist(' + "'" + source + "'," + idx + ')">' + s.name + '</span><span class="pl-artist">' + s.artists + '</span><button onclick="removeFromPlaylist(' + "'" + source + "'," + idx + ')">移除</button></li>';
+            });
+            treeEl.innerHTML = html;
+        }
+
+        function switchPlaylistTab(source) {
+            document.querySelectorAll('.playlist-tabs menu[role="tablist"] li').forEach(function(li) {
+                li.setAttribute('aria-selected', 'false');
+            });
+            const idx = source === 'netease' ? 0 : 1;
+            document.querySelectorAll('.playlist-tabs menu[role="tablist"] li')[idx].setAttribute('aria-selected', 'true');
+            
+            document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+            document.getElementById('tab-' + source).classList.add('active');
+        }
+
+        function selectRow(row) {
+            document.querySelectorAll('table.interactive tbody tr').forEach(function(tr) {
+                tr.classList.remove('highlighted');
+            });
+            row.classList.add('highlighted');
+        }
+
+        async function searchNetease(input) {
+            let songs = [];
+            if (isNeteaseUrl(input)) {
+                const songId = extractNeteaseSongId(input);
+                if (!songId) return [];
+                const resp = await fetch(NETEASE_API + '/song/detail?ids=' + songId);
+                const data = await resp.json();
+                if (data.code === 200 && data.songs) songs = data.songs;
+            } else {
+                const resp = await fetch(NETEASE_API + '/search?keywords=' + encodeURIComponent(input) + '&limit=30&type=1');
+                const data = await resp.json();
+                if (data.code === 200 && data.result && data.result.songs) songs = data.result.songs;
+            }
+            return songs.map(normalizeNeteaseSong);
+        }
+
+        async function searchQQ(input) {
+            let songs = [];
+            let searchKey = input;
+            
+            if (isQQUrl(input)) {
+                const songMid = extractQQSongId(input);
+                if (!songMid) return [];
+                searchKey = songMid;
+            }
+            
+            const qqUrl = 'https://c.y.qq.com/soso/fcgi-bin/client_search_cp?p=1&n=30&w=' + encodeURIComponent(searchKey) + '&new_json=1';
+            const proxyUrl = CORS_PROXY + encodeURIComponent(qqUrl);
+            
+            const resp = await fetch(proxyUrl);
+            const text = await resp.text();
+            
+            let jsonText = text;
+            if (jsonText.startsWith('callback(')) {
+                jsonText = jsonText.substring(9, jsonText.length - 1);
+            }
+            
+            const data = JSON.parse(jsonText);
+            
+            if (isQQUrl(input) && data.data && data.data.song && data.data.song.list) {
+                const songMid = extractQQSongId(input);
+                songs = data.data.song.list.filter(function(s) { return s.mid === songMid; });
+            } else if (data.data && data.data.song && data.data.song.list) {
+                songs = data.data.song.list;
+            }
+            
+            return songs.map(normalizeQQSong);
+        }
+
+        async function doSearch() {
+            const input = document.getElementById('searchInput').value.trim();
+            if (!input) {
+                alert('请输入搜索关键词或音乐链接');
+                return;
+            }
+
+            const source = getSelectedSource();
+            const exactMatch = isExactMatchEnabled();
+            const resultsArea = document.getElementById('resultsArea');
+            const statusText = document.getElementById('statusText');
+            const resultCount = document.getElementById('resultCount');
+
+            resultsArea.innerHTML = '<div class="loading">正在搜索...</div>';
+            statusText.textContent = exactMatch ? '精确搜索中...' : '搜索中...';
+            resultCount.textContent = '';
+            searchResults = [];
+
+            try {
+                let songs = [];
+                if (source === 'netease') {
+                    songs = await searchNetease(input);
+                } else {
+                    songs = await searchQQ(input);
+                }
+
+                // 如果启用了精确匹配，过滤结果
+                if (exactMatch) {
+                    songs = songs.filter(function(s) {
+                        return isExactMatch(s.name, input);
+                    });
+                }
+
+                searchResults = songs;
+                resultCount.textContent = '共 ' + songs.length + ' 首' + (exactMatch ? ' (精确匹配)' : '');
+                statusText.textContent = '搜索完成';
+
+                if (songs.length === 0) {
+                    resultsArea.innerHTML = '<div class="empty">' + (exactMatch ? '未找到完全匹配的歌曲（请检查大小写、空格、标点是否完全一致）' : '未找到相关歌曲') + '</div>';
+                    return;
+                }
+
+                let rowsHtml = '';
+                for (let i = 0; i < songs.length; i++) {
+                    const s = songs[i];
+                    const isExact = exactMatch || isExactMatch(s.name, input);
+                    const exactClass = isExact ? 'exact-match-row' : '';
+                    const exactBadge = isExact ? '<span class="exact-match-badge">精确</span>' : '';
+                    
+                    rowsHtml += '<tr onclick="selectRow(this)" class="' + exactClass + '">' +
+                        '<td class="col-cover"><img src="' + s.cover + '" alt="cover" onerror="this.style.display=\'none\'"></td>' +
+                        '<td class="col-name">' + s.name + exactBadge + '</td>' +
+                        '<td class="col-artist">' + s.artists + '</td>' +
+                        '<td class="col-album">' + s.album + '</td>' +
+                        '<td class="col-duration">' + s.duration + '</td>' +
+                        '<td class="col-actions">' +
+                        '<button onclick="event.stopPropagation(); addToPlaylistByIndex(' + i + ')">添加</button>' +
+                        '</td></tr>';
+                }
+
+                resultsArea.innerHTML = 
+                    '<div class="sunken-panel">' +
+                    '<table class="interactive">' +
+                    '<thead><tr>' +
+                    '<th class="col-cover"></th>' +
+                    '<th class="col-name">歌曲</th>' +
+                    '<th class="col-artist">歌手</th>' +
+                    '<th class="col-album">专辑</th>' +
+                    '<th class="col-duration">时长</th>' +
+                    '<th class="col-actions">操作</th>' +
+                    '</tr></thead>' +
+                    '<tbody>' + rowsHtml + '</tbody>' +
+                    '</table></div>';
+
+            } catch (err) {
+                console.error('Search error:', err);
+                resultsArea.innerHTML = '<div class="error">搜索失败: ' + err.message + '</div>';
+                statusText.textContent = '搜索失败';
+            }
+        }
+
+        // Render playlists on page load
+        renderPlaylist('netease');
+        renderPlaylist('qq');
+    </script>
+</body>
+</html>
